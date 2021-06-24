@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "339828502359",
+    "project_id": "udacity-maps-cb23c",
+    "storage_bucket": "udacity-maps-cb23c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:339828502359:android:63e099a274f1ed882dd812",
+        "android_client_info": {
+          "package_name": "com.udacity.project4"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "339828502359-j73n4nfd3ts832i6i3lk9cupejo0ss2h.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.udacity.project4",
+            "certificate_hash": "6dd2562c9b76ea5e1bdeb8b630709d2c67cecab4"
+          }
+        },
+        {
+          "client_id": "339828502359-jog6loq7li9gvpr0c5i41vl2uluc6tpm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBdjPFbHCCiGvmCFdXO3RLHH3oV0mNbjQU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "339828502359-jog6loq7li9gvpr0c5i41vl2uluc6tpm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
