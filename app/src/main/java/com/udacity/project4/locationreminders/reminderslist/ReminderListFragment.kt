@@ -1,5 +1,6 @@
 package com.udacity.project4.locationreminders.reminderslist
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Intent
@@ -7,6 +8,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.databinding.DataBindingUtil
 import com.firebase.ui.auth.AuthUI
 import com.google.android.gms.location.GeofencingClient
@@ -42,12 +44,28 @@ class ReminderListFragment : BaseFragment() {
 
         checkIfGpsIsEnabled()
 
-        geofencingClient = LocationServices.getGeofencingClient(requireContext())
+        registerForGpsPermission()
 
-        //Start all the geofencing
-        _viewModel.allReminders.observe(this) {
-            if (it.isNotEmpty())
-                startGeoFencing(it)
+        geofencingClient = LocationServices.getGeofencingClient(requireContext())
+    }
+
+    private fun registerForGpsPermission() {
+        if (runningQOrLater) {
+            registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+                if (!it) {
+                    Toast.makeText(
+                        requireContext(),
+                        R.string.permission_denied_explanation,
+                        Toast.LENGTH_LONG
+                    ).show()
+                } else {
+                    //Start all the geofencing
+                    _viewModel.allReminders.observe(this) { reminders ->
+                        if (reminders.isNotEmpty())
+                            startGeoFencing(reminders)
+                    }
+                }
+            }.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
         }
     }
 

@@ -77,6 +77,7 @@ fun Fragment.checkIfGpsIsEnabled(resolve: Boolean = true) {
     val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
 
     val settingsClient = LocationServices.getSettingsClient(requireContext())
+
     val locationSettingsResponseTask =
         settingsClient.checkLocationSettings(builder.build())
     locationSettingsResponseTask.addOnFailureListener { exception ->
@@ -99,5 +100,5 @@ fun Fragment.checkIfGpsIsEnabled(resolve: Boolean = true) {
 private const val REQUEST_TURN_DEVICE_LOCATION_ON = 29
 private const val TAG = "Permissions"
 
-private val runningQOrLater =
+val runningQOrLater =
     android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
