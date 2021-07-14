@@ -16,12 +16,24 @@ class RemindersListViewModel(
     // list that holds the reminder data to be displayed on the UI
     val remindersList = MutableLiveData<List<ReminderDataItem>>()
 
+    //Will be fetched only once at load
+    private val _allReminders = MutableLiveData<List<ReminderDataItem>>()
+    val allReminders = _allReminders
+
+    init {
+        getAllReminders(allReminders)
+    }
+
     /**
      * Get all the reminders from the DataSource and add them to the remindersList to be shown on the UI,
      * or show error if any
      */
     fun loadReminders() {
         showLoading.value = true
+        getAllReminders(remindersList)
+    }
+
+    private fun getAllReminders(reminders: MutableLiveData<List<ReminderDataItem>>) {
         viewModelScope.launch {
             //interacting with the dataSource has to be through a coroutine
             val result = dataSource.getReminders()
@@ -40,14 +52,11 @@ class RemindersListViewModel(
                             reminder.id
                         )
                     })
-                    remindersList.value = dataList
+                    reminders.value = dataList
                 }
                 is Result.Error ->
                     showSnackBar.value = result.message
             }
-
-            //check if no data has to be shown
-            invalidateShowNoData()
         }
     }
 
@@ -56,8 +65,5 @@ class RemindersListViewModel(
      */
     private fun invalidateShowNoData() {
         showNoData.value = remindersList.value == null || remindersList.value!!.isEmpty()
-    }
-
-    fun logout() {
     }
 }

@@ -7,7 +7,7 @@ import com.udacity.project4.locationreminders.data.local.RemindersLocalRepositor
 import com.udacity.project4.locationreminders.reminderslist.RemindersListViewModel
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import org.koin.android.ext.koin.androidContext
-import org.koin.androidx.viewmodel.dsl.viewModel
+import org.koin.android.viewmodel.dsl.viewModel
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
 
@@ -27,6 +27,7 @@ class MyApp : Application() {
                     get() as ReminderDataSource
                 )
             }
+
             //Declare singleton definitions to be later injected using by inject()
             single {
                 //This view model is declared singleton to be used across multiple fragments
@@ -35,7 +36,9 @@ class MyApp : Application() {
                     get() as ReminderDataSource
                 )
             }
+
             single { RemindersLocalRepository(get()) as ReminderDataSource }
+
             single { LocalDB.createRemindersDao(this@MyApp) }
         }
 

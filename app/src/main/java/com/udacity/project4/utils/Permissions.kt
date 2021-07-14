@@ -6,6 +6,7 @@ import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import com.google.android.gms.common.api.ResolvableApiException
@@ -16,13 +17,13 @@ import com.udacity.project4.R
 
 @TargetApi(29)
 fun Fragment.checkLocationPermission() {
-    if (!foregroundAndBackgroundLocationPermissionApproved()) {
+    if (!checkForegroundAndBackgroundLocationPermissionApproved()) {
         requestForegroundAndBackgroundLocationPermissions()
     }
 }
 
 @TargetApi(29)
-fun Fragment.foregroundAndBackgroundLocationPermissionApproved(): Boolean {
+fun Fragment.checkForegroundAndBackgroundLocationPermissionApproved(): Boolean {
     val foregroundLocationApproved = (
             PackageManager.PERMISSION_GRANTED ==
                     ActivityCompat.checkSelfPermission(
@@ -43,29 +44,38 @@ fun Fragment.foregroundAndBackgroundLocationPermissionApproved(): Boolean {
 
 @TargetApi(29)
 fun Fragment.requestForegroundAndBackgroundLocationPermissions() {
-    var permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
-    val resultCode = when {
-        runningQOrLater -> {
-            permissionsArray += Manifest.permission.ACCESS_BACKGROUND_LOCATION
-            REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE
-        }
-        else -> REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
-    }
-
     Log.d(TAG, "Request foreground only location permission")
 
-    ActivityCompat.requestPermissions(
-        requireActivity(),
-        permissionsArray,
-        resultCode
-    )
+    val requestMultiplePermissions =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            permissions.entries.forEach {
+                if (!it.value) {
+                    Toast.makeText(
+                        requireContext(),
+                        R.string.permission_denied_explanation,
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
+
+    var permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+    if (runningQOrLater) {
+        permissionsArray += Manifest.permission.ACCESS_BACKGROUND_LOCATION
+    }
+
+    requestMultiplePermissions.launch(permissionsArray)
 }
 
-fun Fragment.checkDeviceLocationSettingsAndStartGeofence(resolve: Boolean = true) {
+/**
+ * This method will check if the GPS is enabled, if not request for it, else prompt at error
+ */
+fun Fragment.checkIfGpsIsEnabled(resolve: Boolean = true) {
     val locationRequest = LocationRequest.create().apply {
         priority = LocationRequest.PRIORITY_LOW_POWER
     }
     val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
+
     val settingsClient = LocationServices.getSettingsClient(requireContext())
     val locationSettingsResponseTask =
         settingsClient.checkLocationSettings(builder.build())
@@ -84,18 +94,10 @@ fun Fragment.checkDeviceLocationSettingsAndStartGeofence(resolve: Boolean = true
                 .show()
         }
     }
-//    locationSettingsResponseTask.addOnCompleteListener {
-//        //Exit the app
-//        requireActivity().finish()
-//    }
 }
 
-private const val REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE = 33
-private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
 private const val REQUEST_TURN_DEVICE_LOCATION_ON = 29
-private const val TAG = "HuntMainActivity"
-private const val LOCATION_PERMISSION_INDEX = 0
-private const val BACKGROUND_LOCATION_PERMISSION_INDEX = 1
+private const val TAG = "Permissions"
 
 private val runningQOrLater =
     android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q

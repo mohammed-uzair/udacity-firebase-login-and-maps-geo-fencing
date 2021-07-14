@@ -22,13 +22,13 @@ import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.dto.Result
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.checkLocationPermission
-import com.udacity.project4.utils.foregroundAndBackgroundLocationPermissionApproved
+import com.udacity.project4.utils.checkForegroundAndBackgroundLocationPermissionApproved
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.koin.core.KoinComponent
-import org.koin.core.inject
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 class SelectLocationFragment : BaseFragment(), KoinComponent, OnMapReadyCallback {
     companion object {
@@ -124,7 +124,7 @@ class SelectLocationFragment : BaseFragment(), KoinComponent, OnMapReadyCallback
         val homeLatLng = LatLng(DEFAULT_LATITUDE, DEFAULT_LONGITUDE)
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(homeLatLng, DEFAULT_ZOOM_LEVEL))
 
-        if (foregroundAndBackgroundLocationPermissionApproved())
+        if (checkForegroundAndBackgroundLocationPermissionApproved())
             map.isMyLocationEnabled = true
 
         //Get all the saved locations

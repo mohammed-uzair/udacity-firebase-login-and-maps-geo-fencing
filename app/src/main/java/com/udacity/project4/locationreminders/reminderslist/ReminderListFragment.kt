@@ -1,29 +1,69 @@
 package com.udacity.project4.locationreminders.reminderslist
 
+import android.annotation.SuppressLint
+import android.app.PendingIntent
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.*
+import android.widget.Toast
 import androidx.databinding.DataBindingUtil
 import com.firebase.ui.auth.AuthUI
+import com.google.android.gms.location.GeofencingClient
+import com.google.android.gms.location.LocationServices
 import com.udacity.project4.R
 import com.udacity.project4.authentication.AuthenticationActivity
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.databinding.FragmentRemindersBinding
+import com.udacity.project4.locationreminders.geofence.GeoFence.getGeofencingRequest
+import com.udacity.project4.locationreminders.geofence.GeofenceBroadcastReceiver
 import com.udacity.project4.utils.*
-import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.android.viewmodel.ext.android.viewModel
+
+private const val TAG = "ReminderListFragment"
 
 class ReminderListFragment : BaseFragment() {
     //use Koin to retrieve the ViewModel instance
     override val _viewModel: RemindersListViewModel by viewModel()
     private lateinit var binding: FragmentRemindersBinding
+    lateinit var geofencingClient: GeofencingClient
+
+    private val geofencePendingIntent: PendingIntent by lazy {
+        val intent = Intent(requireContext(), GeofenceBroadcastReceiver::class.java)
+        intent.action = ACTION_GEOFENCE_EVENT
+        PendingIntent.getBroadcast(requireContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         checkLocationPermission()
 
-        checkDeviceLocationSettingsAndStartGeofence()
+        checkIfGpsIsEnabled()
+
+        geofencingClient = LocationServices.getGeofencingClient(requireContext())
+
+        //Start all the geofencing
+        _viewModel.allReminders.observe(this) {
+            if (it.isNotEmpty())
+                startGeoFencing(it)
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun startGeoFencing(reminders: List<ReminderDataItem>) {
+        Log.d(TAG, "startGeoFencing() called with: reminders = $reminders")
+        geofencingClient.addGeofences(
+            getGeofencingRequest(reminders),
+            geofencePendingIntent
+        )
+            .addOnSuccessListener {
+                Toast.makeText(activity, "Geofence started", Toast.LENGTH_LONG).show()
+            }
+            .addOnFailureListener {
+                Toast.makeText(activity, "Adding geofencing failed", Toast.LENGTH_LONG).show()
+            }
     }
 
     override fun onCreateView(

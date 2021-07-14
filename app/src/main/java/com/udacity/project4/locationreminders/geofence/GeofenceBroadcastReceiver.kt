@@ -18,8 +18,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.koin.core.KoinComponent
-import org.koin.core.inject
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 /**
  * Triggered by the Geofence.  Since we can have many Geofences at once, we pull the request
@@ -68,16 +68,18 @@ class GeofenceBroadcastReceiver : BroadcastReceiver(), KoinComponent {
                         is Result.Success -> {
                             result.data.let { it ->
                                 if (it.isNotEmpty()) {
-                                    val foundIndex = it.indexOfFirst { it.id == fenceId }
+                                    val foundIndex = it.firstOrNull { it.id == fenceId }
 
-                                    val reminderResult =
-                                        remindersRepository.getReminder(foundIndex.toString())
-                                    when (reminderResult) {
-                                        is Result.Error -> {
-                                        }
-                                        is Result.Success -> {
-                                            reminderResult.data.let {
-                                                reminderDTO = it
+                                    foundIndex?.let {
+                                        val reminderResult =
+                                            remindersRepository.getReminder(foundIndex.id)
+                                        when (reminderResult) {
+                                            is Result.Error -> {
+                                            }
+                                            is Result.Success -> {
+                                                reminderResult.data.let {
+                                                    reminderDTO = it
+                                                }
                                             }
                                         }
                                     }
@@ -87,7 +89,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver(), KoinComponent {
                     }
 
                     withContext(Dispatchers.Main) {
-                        reminderDTO.let {
+                        reminderDTO?.let {
                             val reminderDataItem = ReminderDataItem(
                                 reminderDTO!!.title,
                                 reminderDTO!!.description,
