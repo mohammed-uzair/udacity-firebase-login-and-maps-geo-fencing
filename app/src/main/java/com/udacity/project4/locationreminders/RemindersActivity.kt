@@ -1,9 +1,7 @@
 package com.udacity.project4.locationreminders
 
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.MenuItem
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.fragment.NavHostFragment
 import com.udacity.project4.R
@@ -27,17 +25,5 @@ class RemindersActivity : AppCompatActivity() {
             }
         }
         return super.onOptionsItemSelected(item)
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
-            Toast.makeText(this, R.string.permission_denied_explanation, Toast.LENGTH_LONG).show()
-        }
-
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 }
