@@ -37,26 +37,28 @@ class ReminderListFragment : BaseFragment() {
         PendingIntent.getBroadcast(requireContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
+    private val requestBackgroundLocationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+        if (!it) {
+            Toast.makeText(
+                requireContext(),
+                R.string.permission_background_denied_explanation,
+                Toast.LENGTH_LONG
+            ).show()
+        } else {
+            //Start all the geofencing
+            _viewModel.allReminders.observe(this) { reminders ->
+                if (reminders.isNotEmpty())
+                    startGeoFencing(reminders)
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         checkGpsEnabled().addOnSuccessListener {
             if (!checkBackgroundLocationPermissionGranted()) {
-                registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-                    if (!it) {
-                        Toast.makeText(
-                            requireContext(),
-                            R.string.permission_background_denied_explanation,
-                            Toast.LENGTH_LONG
-                        ).show()
-                    } else {
-                        //Start all the geofencing
-                        _viewModel.allReminders.observe(this) { reminders ->
-                            if (reminders.isNotEmpty())
-                                startGeoFencing(reminders)
-                        }
-                    }
-                }.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                requestBackgroundLocationPermission.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
             }
         }
 
