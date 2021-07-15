@@ -13,10 +13,12 @@ import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.LocationSettingsRequest
+import com.google.android.gms.location.LocationSettingsResponse
+import com.google.android.gms.tasks.Task
 import com.udacity.project4.R
 
 @TargetApi(29)
-fun Fragment.checkLocationPermission() {
+fun Fragment.checkLocationPermissions() {
     if (!checkForegroundAndBackgroundLocationPermissionApproved()) {
         requestForegroundAndBackgroundLocationPermissions()
     }
@@ -52,7 +54,7 @@ fun Fragment.requestForegroundAndBackgroundLocationPermissions() {
                 if (!it.value) {
                     Toast.makeText(
                         requireContext(),
-                        R.string.permission_denied_explanation,
+                        R.string.permission_foreground_denied_explanation,
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -67,19 +69,24 @@ fun Fragment.requestForegroundAndBackgroundLocationPermissions() {
     requestMultiplePermissions.launch(permissionsArray)
 }
 
-/**
- * This method will check if the GPS is enabled, if not request for it, else prompt at error
- */
-fun Fragment.checkIfGpsIsEnabled(resolve: Boolean = true) {
+private const val REQUEST_TURN_DEVICE_LOCATION_ON = 29
+private const val TAG = "Permissions"
+
+private val runningQOrLater =
+    android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
+
+fun Fragment.checkGpsEnabled(resolve: Boolean = true): Task<LocationSettingsResponse> {
     val locationRequest = LocationRequest.create().apply {
         priority = LocationRequest.PRIORITY_LOW_POWER
     }
+
     val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
 
     val settingsClient = LocationServices.getSettingsClient(requireContext())
 
     val locationSettingsResponseTask =
         settingsClient.checkLocationSettings(builder.build())
+
     locationSettingsResponseTask.addOnFailureListener { exception ->
         if (exception is ResolvableApiException && resolve) {
             try {
@@ -95,10 +102,46 @@ fun Fragment.checkIfGpsIsEnabled(resolve: Boolean = true) {
                 .show()
         }
     }
+
+    return locationSettingsResponseTask
 }
 
-private const val REQUEST_TURN_DEVICE_LOCATION_ON = 29
-private const val TAG = "Permissions"
+fun Fragment.checkForegroundLocationPermissionGranted() = (
+        PackageManager.PERMISSION_GRANTED ==
+                ActivityCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ))
 
-val runningQOrLater =
-    android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
+fun Fragment.requestForegroundLocationPermission(): Boolean {
+    registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+        if (!it) {
+            Toast.makeText(
+                requireContext(),
+                R.string.permission_foreground_denied_explanation,
+                Toast.LENGTH_LONG
+            ).show()
+        } else {
+            //Start all the geofencing
+            _viewModel.allReminders.observe(this) { reminders ->
+                if (reminders.isNotEmpty())
+                    startGeoFencing(reminders)
+            }
+        }
+    }.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+}
+
+fun Fragment.checkBackgroundLocationPermissionGranted(): Boolean {
+    if (runningQOrLater) {
+        return PackageManager.PERMISSION_GRANTED ==
+                ActivityCompat.checkSelfPermission(
+                    requireContext(), Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                )
+    }
+
+    return true
+}
+
+fun Fragment.requestBackgroundLocationPermission() {
+
+}

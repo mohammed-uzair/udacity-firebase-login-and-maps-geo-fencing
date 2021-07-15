@@ -40,33 +40,27 @@ class ReminderListFragment : BaseFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        checkLocationPermission()
-
-        checkIfGpsIsEnabled()
-
-        registerForGpsPermission()
+        checkGpsEnabled().addOnSuccessListener {
+            if (!checkBackgroundLocationPermissionGranted()) {
+                registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+                    if (!it) {
+                        Toast.makeText(
+                            requireContext(),
+                            R.string.permission_background_denied_explanation,
+                            Toast.LENGTH_LONG
+                        ).show()
+                    } else {
+                        //Start all the geofencing
+                        _viewModel.allReminders.observe(this) { reminders ->
+                            if (reminders.isNotEmpty())
+                                startGeoFencing(reminders)
+                        }
+                    }
+                }.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+            }
+        }
 
         geofencingClient = LocationServices.getGeofencingClient(requireContext())
-    }
-
-    private fun registerForGpsPermission() {
-        if (runningQOrLater) {
-            registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-                if (!it) {
-                    Toast.makeText(
-                        requireContext(),
-                        R.string.permission_denied_explanation,
-                        Toast.LENGTH_LONG
-                    ).show()
-                } else {
-                    //Start all the geofencing
-                    _viewModel.allReminders.observe(this) { reminders ->
-                        if (reminders.isNotEmpty())
-                            startGeoFencing(reminders)
-                    }
-                }
-            }.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-        }
     }
 
     @SuppressLint("MissingPermission")
