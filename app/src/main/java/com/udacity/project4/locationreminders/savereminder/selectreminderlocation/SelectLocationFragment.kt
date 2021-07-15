@@ -39,7 +39,6 @@ class SelectLocationFragment : BaseFragment(), KoinComponent, OnMapReadyCallback
         private const val DEFAULT_LATITUDE = 37.422160
         private const val DEFAULT_LONGITUDE = -122.084270
         private const val DEFAULT_ZOOM_LEVEL = 15f
-        private const val REQUEST_LOCATION_PERMISSION = 101101
     }
 
     private lateinit var map: GoogleMap
@@ -49,6 +48,21 @@ class SelectLocationFragment : BaseFragment(), KoinComponent, OnMapReadyCallback
     override val _viewModel: SaveReminderViewModel by inject()
     private lateinit var mapView: MapView
     private lateinit var binding: FragmentSelectLocationBinding
+
+    @SuppressLint("MissingPermission")
+    private val permissionRequest = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+        if (!it) {
+            Toast.makeText(
+                requireContext(),
+                R.string.permission_foreground_denied_explanation,
+                Toast.LENGTH_LONG
+            ).show()
+        } else {
+            if (this::map.isInitialized) {
+                map.isMyLocationEnabled = true
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -132,17 +146,9 @@ class SelectLocationFragment : BaseFragment(), KoinComponent, OnMapReadyCallback
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(homeLatLng, DEFAULT_ZOOM_LEVEL))
 
         if (!checkForegroundLocationPermissionGranted()) {
-            registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-                if (!it) {
-                    Toast.makeText(
-                        requireContext(),
-                        R.string.permission_foreground_denied_explanation,
-                        Toast.LENGTH_LONG
-                    ).show()
-                } else {
-                    map.isMyLocationEnabled = true
-                }
-            }.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            permissionRequest.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        }else{
+            map.isMyLocationEnabled = true
         }
 
         //Get all the saved locations

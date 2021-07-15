@@ -20,7 +20,7 @@ import com.udacity.project4.R
 private const val REQUEST_TURN_DEVICE_LOCATION_ON = 29
 private const val TAG = "Permissions"
 
-private val runningQOrLater =
+val runningQOrLater =
     android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
 
 fun Fragment.checkGpsEnabled(resolve: Boolean = true): Task<LocationSettingsResponse> {

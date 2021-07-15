@@ -29,55 +29,11 @@ class ReminderListFragment : BaseFragment() {
     //use Koin to retrieve the ViewModel instance
     override val _viewModel: RemindersListViewModel by viewModel()
     private lateinit var binding: FragmentRemindersBinding
-    lateinit var geofencingClient: GeofencingClient
 
     private val geofencePendingIntent: PendingIntent by lazy {
         val intent = Intent(requireContext(), GeofenceBroadcastReceiver::class.java)
         intent.action = ACTION_GEOFENCE_EVENT
         PendingIntent.getBroadcast(requireContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
-    }
-
-    private val requestBackgroundLocationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-        if (!it) {
-            Toast.makeText(
-                requireContext(),
-                R.string.permission_background_denied_explanation,
-                Toast.LENGTH_LONG
-            ).show()
-        } else {
-            //Start all the geofencing
-            _viewModel.allReminders.observe(this) { reminders ->
-                if (reminders.isNotEmpty())
-                    startGeoFencing(reminders)
-            }
-        }
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        checkGpsEnabled().addOnSuccessListener {
-            if (!checkBackgroundLocationPermissionGranted()) {
-                requestBackgroundLocationPermission.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-            }
-        }
-
-        geofencingClient = LocationServices.getGeofencingClient(requireContext())
-    }
-
-    @SuppressLint("MissingPermission")
-    private fun startGeoFencing(reminders: List<ReminderDataItem>) {
-        Log.d(TAG, "startGeoFencing() called with: reminders = $reminders")
-        geofencingClient.addGeofences(
-            getGeofencingRequest(reminders),
-            geofencePendingIntent
-        )
-            .addOnSuccessListener {
-                Toast.makeText(activity, "Geofence started", Toast.LENGTH_LONG).show()
-            }
-            .addOnFailureListener {
-                Toast.makeText(activity, "Adding geofencing failed", Toast.LENGTH_LONG).show()
-            }
     }
 
     override fun onCreateView(

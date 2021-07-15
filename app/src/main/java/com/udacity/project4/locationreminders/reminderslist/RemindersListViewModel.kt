@@ -16,14 +16,6 @@ class RemindersListViewModel(
     // list that holds the reminder data to be displayed on the UI
     val remindersList = MutableLiveData<List<ReminderDataItem>>()
 
-    //Will be fetched only once at load
-    private val _allReminders = MutableLiveData<List<ReminderDataItem>>()
-    val allReminders = _allReminders
-
-    init {
-        getAllReminders(allReminders)
-    }
-
     /**
      * Get all the reminders from the DataSource and add them to the remindersList to be shown on the UI,
      * or show error if any
