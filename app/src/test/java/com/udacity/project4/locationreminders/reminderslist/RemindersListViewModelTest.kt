@@ -3,14 +3,15 @@ package com.udacity.project4.locationreminders.reminderslist
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.MainCoroutineRule
 import com.udacity.project4.locationreminders.data.FakeDataSource
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.util.getOrAwaitValue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.MainCoroutineDispatcher
 import kotlinx.coroutines.runBlocking
 import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.not
-import org.hamcrest.Matchers.nullValue
+import org.hamcrest.Matchers.*
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -25,6 +26,9 @@ class RemindersListViewModelTest {
     var instantExecutorRule = InstantTaskExecutorRule()
 
     //TODO: provide testing to the RemindersListViewModel and its live data objects
+
+    @get:Rule
+    var mainCoroutineRule = MainCoroutineRule()
 
     private val dataSource = FakeDataSource()
     private val reminder1 =
@@ -41,6 +45,40 @@ class RemindersListViewModelTest {
     @After
     fun tearDown() {
         stopKoin()
+    }
+
+    @Test
+    fun test_check_loading() {
+        // Given a fresh ViewModel
+        val reminderViewModel =
+            RemindersListViewModel(ApplicationProvider.getApplicationContext(), dataSource)
+
+        mainCoroutineRule.pauseDispatcher()
+
+        //WHEN fetched all reminders
+        reminderViewModel.loadReminders()
+
+        assertThat(reminderViewModel.showLoading.getOrAwaitValue(), `is`(true))
+
+        mainCoroutineRule.resumeDispatcher()
+
+        // Then the new reminder event is triggered
+        assertThat(reminderViewModel.showLoading.getOrAwaitValue(), `is`(false))
+    }
+
+    @Test
+    fun test_shouldReturnError() {
+        // Given a fresh ViewModel
+        val reminderViewModel =
+            RemindersListViewModel(ApplicationProvider.getApplicationContext(), dataSource)
+
+        dataSource.shouldReturnError(true)
+
+        //WHEN fetched all reminders
+        reminderViewModel.loadReminders()
+
+        // Then the new reminder event is triggered
+        assertThat(reminderViewModel.showSnackBar.getOrAwaitValue(), `is`("Test exception"))
     }
 
     @Test

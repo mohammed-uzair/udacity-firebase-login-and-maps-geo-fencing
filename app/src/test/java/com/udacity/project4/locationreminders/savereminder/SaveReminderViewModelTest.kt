@@ -61,7 +61,8 @@ class SaveReminderViewModelTest {
             )
 
         //WHEN validate reminder
-        saveReminderViewModel.validateAndSaveReminder(emptyTitleReminder)
+        saveReminderViewModel.validateEnteredData(emptyTitleReminder)
+        saveReminderViewModel.saveReminder(emptyTitleReminder)
 
         // Then the new reminder event is triggered
         val value = saveReminderViewModel.showSnackBarInt.getOrAwaitValue()
@@ -87,7 +88,8 @@ class SaveReminderViewModelTest {
             )
 
         //WHEN validate reminder
-        saveReminderViewModel.validateAndSaveReminder(emptyLocationReminder)
+        saveReminderViewModel.validateEnteredData(emptyLocationReminder)
+        saveReminderViewModel.saveReminder(emptyLocationReminder)
 
         // Then the new reminder event is triggered
         val value = saveReminderViewModel.showSnackBarInt.getOrAwaitValue()

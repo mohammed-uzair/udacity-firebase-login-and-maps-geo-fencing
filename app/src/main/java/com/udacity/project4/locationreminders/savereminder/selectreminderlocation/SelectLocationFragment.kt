@@ -17,6 +17,7 @@ import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
+import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
@@ -25,14 +26,16 @@ import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.dto.Result
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.checkForegroundLocationPermissionGranted
-import com.udacity.project4.utils.checkGpsEnabled
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.android.viewmodel.ext.android.sharedViewModel
+import org.koin.core.component.KoinApiExtension
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
+@KoinApiExtension
 class SelectLocationFragment : BaseFragment(), KoinComponent, OnMapReadyCallback {
     companion object {
         private const val TAG = "SelectLocationFragment"
@@ -43,32 +46,28 @@ class SelectLocationFragment : BaseFragment(), KoinComponent, OnMapReadyCallback
 
     private lateinit var map: GoogleMap
     private val remindersRepository: ReminderDataSource by inject()
+    private var marker: Marker? = null
 
     //Use Koin to get the view model of the SaveReminder
-    override val _viewModel: SaveReminderViewModel by inject()
+    override val _viewModel : SaveReminderViewModel by sharedViewModel()
     private lateinit var mapView: MapView
     private lateinit var binding: FragmentSelectLocationBinding
 
     @SuppressLint("MissingPermission")
-    private val permissionRequest = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-        if (!it) {
-            Toast.makeText(
-                requireContext(),
-                R.string.permission_foreground_denied_explanation,
-                Toast.LENGTH_LONG
-            ).show()
-        } else {
-            if (this::map.isInitialized) {
-                map.isMyLocationEnabled = true
+    private val permissionRequest =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+            if (!it) {
+                Toast.makeText(
+                    requireContext(),
+                    R.string.permission_foreground_denied_explanation,
+                    Toast.LENGTH_LONG
+                ).show()
+            } else {
+                if (this::map.isInitialized) {
+                    map.isMyLocationEnabled = true
+                }
             }
         }
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        checkGpsEnabled()
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -108,7 +107,8 @@ class SelectLocationFragment : BaseFragment(), KoinComponent, OnMapReadyCallback
     private fun onLocationSelected(latLng: LatLng, name: String = "") {
         _viewModel.latitude.value = latLng.latitude
         _viewModel.longitude.value = latLng.longitude
-        _viewModel.reminderSelectedLocationStr.value = name
+        _viewModel.reminderSelectedLocationStr.value =
+            if (name.isBlank()) "${latLng.latitude}, ${latLng.longitude}" else name
         findNavController().popBackStack()
     }
 
@@ -147,7 +147,7 @@ class SelectLocationFragment : BaseFragment(), KoinComponent, OnMapReadyCallback
 
         if (!checkForegroundLocationPermissionGranted()) {
             permissionRequest.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-        }else{
+        } else {
             map.isMyLocationEnabled = true
         }
 
@@ -180,6 +180,8 @@ class SelectLocationFragment : BaseFragment(), KoinComponent, OnMapReadyCallback
         }
 
         map.setOnPoiClickListener {
+            addMarkerOnCurrentSelectedLocation(it.latLng)
+
             //Ask the user for confirmation
             showConfirmationAlert(
                 R.string.save_location_confirmation_title,
@@ -191,6 +193,8 @@ class SelectLocationFragment : BaseFragment(), KoinComponent, OnMapReadyCallback
         }
 
         map.setOnMapClickListener {
+            addMarkerOnCurrentSelectedLocation(it)
+
             //Ask the user for confirmation
             showConfirmationAlert(
                 R.string.save_location_confirmation_title,
@@ -199,6 +203,17 @@ class SelectLocationFragment : BaseFragment(), KoinComponent, OnMapReadyCallback
                 //Save the user marked location
                 onLocationSelected(it)
             }
+        }
+    }
+
+    private fun addMarkerOnCurrentSelectedLocation(latLng: LatLng) {
+        if (this::map.isInitialized) {
+            // Clear the old marker
+            marker?.remove()
+
+            // Add the marker
+            marker =
+                map.addMarker(MarkerOptions().position(LatLng(latLng.latitude, latLng.longitude)))
         }
     }
 }

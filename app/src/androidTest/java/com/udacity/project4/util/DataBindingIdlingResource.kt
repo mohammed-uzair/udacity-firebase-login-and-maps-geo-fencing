@@ -23,7 +23,6 @@ import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.testing.FragmentScenario
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.IdlingResource
-import com.udacity.project4.locationreminders.data.local.FakeDao
 import java.util.*
 
 /**

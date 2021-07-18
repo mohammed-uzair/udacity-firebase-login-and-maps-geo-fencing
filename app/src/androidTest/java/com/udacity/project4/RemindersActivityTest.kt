@@ -7,9 +7,12 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.NoMatchingViewException
+import androidx.test.espresso.UiController
+import androidx.test.espresso.ViewAction
 import androidx.test.espresso.ViewAssertion
 import androidx.test.espresso.action.ViewActions.*
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.RootMatchers.withDecorView
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
@@ -19,8 +22,9 @@ import com.udacity.project4.locationreminders.data.local.LocalDB
 import com.udacity.project4.locationreminders.data.local.RemindersLocalRepository
 import com.udacity.project4.locationreminders.reminderslist.RemindersListViewModel
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
-import kotlinx.coroutines.*
+import kotlinx.coroutines.runBlocking
 import org.hamcrest.CoreMatchers.`is`
+import org.hamcrest.CoreMatchers.not
 import org.hamcrest.Matcher
 import org.junit.Before
 import org.junit.Test
@@ -37,8 +41,9 @@ import org.koin.test.get
 @LargeTest
 //END TO END test to black box test the app
 class RemindersActivityTest :
-    AutoCloseKoinTest() {// Extended Koin Test - embed autoclose @after method to close Koin after every test
-
+    AutoCloseKoinTest() {
+    // Extended Koin Test - embed autoclose @after method to close Koin after every test
+    private var decorView: View? = null
     private lateinit var repository: ReminderDataSource
     private lateinit var appContext: Application
 
@@ -79,11 +84,15 @@ class RemindersActivityTest :
         }
     }
 
-
     //    TODO: add End to End testing to the app
     @Test
     fun test_black_box() {
         val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
+
+        activityScenario.onActivity {
+            decorView = it.window.decorView
+        }
+
         onView(withId(R.id.reminderssRecyclerView))
             .check(matches(isDisplayed()))
 
@@ -110,19 +119,38 @@ class RemindersActivityTest :
         onView(withId(R.id.map))
             .perform(click())
 
-        CoroutineScope(Dispatchers.Main).launch {
-            delay(700)
+        onView(isRoot()).perform(waitFor(700))
 
-            onView(withId(android.R.id.button1)).perform(click())
+        onView(withId(android.R.id.button1)).perform(click())
 
-            //Assert if the reminder is added
-            onView(withId(R.id.reminderssRecyclerView))
-                .check(matches(isDisplayed()))
+        onView(withId(R.id.saveReminder)).perform(click())
 
-            //Assert the recycler list count is 1
-            onView(withId(R.id.reminderssRecyclerView)).check(RecyclerViewItemCountAssertion(1))
+        onView(isRoot()).perform(waitFor(200))
 
-            activityScenario.close()
+        //Assert if the reminder is added
+        onView(withId(R.id.reminderssRecyclerView))
+            .check(matches(isDisplayed()))
+
+        //Assert the recycler list count is 1
+        onView(withId(R.id.reminderssRecyclerView)).check(RecyclerViewItemCountAssertion(1))
+
+        onView(isRoot()).perform(waitFor(200))
+
+        //Assert toast is displayed
+        onView(withText(R.string.reminder_saved)).inRoot(
+            withDecorView(not(`is`(decorView)))
+        ).check(matches(isDisplayed()))
+
+        activityScenario.close()
+    }
+
+    private fun waitFor(delay: Long): ViewAction {
+        return object : ViewAction {
+            override fun getConstraints(): Matcher<View> = isRoot()
+            override fun getDescription(): String = "wait for $delay milliseconds"
+            override fun perform(uiController: UiController, v: View?) {
+                uiController.loopMainThreadForAtLeast(delay)
+            }
         }
     }
 }
