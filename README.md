@@ -5,6 +5,19 @@ Once the user reaches the geo-location of the saved reminder a notification is s
 
 The app follows the clean-architecture approach and uses the latest android library including the Android jetpack.
 
+## Screens
+<img src="assets/screen1.png" width="428" height="926" />	<img src="assets/screen2.png" width="428" height="926" />
+<img src="assets/screen3.png" width="428" height="926" />	<img src="assets/screen4.png" width="428" height="926" />
+<img src="assets/screen5.png" width="428" height="926" />	<img src="assets/screen6.png" width="428" height="926" />
+<img src="assets/screen7.png" width="428" height="926" />	<img src="assets/screen8.png" width="428" height="926" />
+
+## Setting up the Repository
+
+To get started with this project, simply pull the repository and import the project into Android Studio. From there, deploy the project to an emulator or device. 
+
+* NOTE: In order for this project to pull data, you will need to add your API Key to the project for the maps to run. You can generate an API Key from the [Google Developers Console]
+
+
 ## Report Issues
 
 Notice any issues with a repository? Please file a github issue in the repository.
